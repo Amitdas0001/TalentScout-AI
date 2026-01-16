@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🎯 TalentScout AI - Intelligent Hiring Assistant
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
@@ -543,3 +544,7 @@ For questions or issues:
 ⭐ Star this repo if you find it helpful!
 
 </div>
+=======
+# TalentScout-AI
+An LLM-powered hiring assistant that collects candidate information, understands their tech stack, and generates tailored technical screening questions through a structured, context-aware conversation. Built with Python and Streamlit to automate initial candidate screening
+>>>>>>> 5e0c5a122d519b37b501f6097e44f06e2d781fb1
