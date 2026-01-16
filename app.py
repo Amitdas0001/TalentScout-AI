@@ -14,6 +14,9 @@ from datetime import datetime
 from typing import Dict, List, Optional
 import os
 from dotenv import load_dotenv
+import pandas as pd
+from io import BytesIO
+import base64
 
 # Import custom modules
 from chatbot_engine import HiringAssistant
@@ -26,7 +29,7 @@ load_dotenv()
 # Page configuration
 st.set_page_config(
     page_title="TalentScout - Hiring Assistant",
-    page_icon="🎯",
+    page_icon="TS",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -256,108 +259,111 @@ st.markdown("""
             transform: translateX(0);
         }
     }
+    /* ChatGPT-style Input Bar */
+    .stChatInput {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        padding: 1.5rem 2rem !important;
+        background: linear-gradient(to top, rgba(10, 14, 39, 0.98) 0%, rgba(10, 14, 39, 0.95) 70%, transparent 100%) !important;
+        backdrop-filter: blur(10px) !important;
+        z-index: 999 !important;
+        border-top: 1px solid rgba(0, 255, 255, 0.2) !important;
+    }
     
-    /* Chat input styling with enhanced cyberpunk effects */
-    @keyframes inputPulse {
-        0%, 100% {
-            box-shadow: 
-                0 0 20px rgba(0, 255, 255, 0.4),
-                0 0 40px rgba(0, 255, 255, 0.2),
-                inset 0 0 20px rgba(0, 0, 0, 0.8);
-        }
-        50% {
-            box-shadow: 
-                0 0 30px rgba(0, 255, 255, 0.6),
-                0 0 60px rgba(0, 255, 255, 0.3),
-                inset 0 0 20px rgba(0, 0, 0, 0.8);
-        }
+    .stChatInput > div {
+        max-width: 900px !important;
+        margin: 0 auto !important;
     }
     
     .stChatInput > div > div {
-        background: linear-gradient(135deg, rgba(10, 14, 39, 0.95) 0%, rgba(20, 24, 49, 0.95) 100%) !important;
-        border: 2px solid rgba(0, 255, 255, 0.7) !important;
-        border-radius: 20px !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(0, 255, 255, 0.3) !important;
+        border-radius: 24px !important;
         box-shadow: 
-            0 0 25px rgba(0, 255, 255, 0.4),
-            0 0 50px rgba(0, 255, 255, 0.2),
-            inset 0 0 20px rgba(0, 0, 0, 0.8) !important;
-        animation: inputPulse 3s ease-in-out infinite;
-        position: relative;
-        overflow: visible;
+            0 4px 20px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(0, 255, 255, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+        overflow: hidden;
+        transition: all 0.2s ease !important;
     }
     
-    .stChatInput > div > div::before {
-        content: "";
-        position: absolute;
-        top: -2px;
-        left: -2px;
-        right: -2px;
-        bottom: -2px;
-        background: linear-gradient(45deg, #00ffff, #ff00ff, #00ffff, #ff00ff);
-        border-radius: 20px;
-        z-index: -1;
-        opacity: 0.4;
-        filter: blur(8px);
-        background-size: 300% 300%;
-        animation: gradientShift 4s ease infinite;
+    .stChatInput > div > div:hover,
+    .stChatInput > div > div:focus-within {
+        background: rgba(255, 255, 255, 1) !important;
+        border: 1px solid rgba(0, 255, 255, 0.6) !important;
+        box-shadow: 
+            0 6px 30px rgba(0, 255, 255, 0.2),
+            0 0 0 1px rgba(0, 255, 255, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
     }
     
-    @keyframes gradientShift {
-        0% {
-            background-position: 0% 50%;
-        }
-        50% {
-            background-position: 100% 50%;
-        }
-        100% {
-            background-position: 0% 50%;
-        }
-    }
-    
-    .stChatInput input {
-        color: #00ffff !important;
-        font-size: 1.2rem !important;
-        font-weight: 600 !important;
-        font-family: 'Rajdhani', sans-serif !important;
-        text-shadow: 0 0 5px rgba(0, 255, 255, 0.5) !important;
-        letter-spacing: 0.5px !important;
-        padding: 1rem 1.5rem !important;
-    }
-    
-    .stChatInput input::placeholder {
-        color: rgba(0, 255, 255, 0.6) !important;
-        font-weight: 500 !important;
-        letter-spacing: 1px !important;
-    }
-    
+    .stChatInput input,
     .stChatInput textarea {
-        color: #00ffff !important;
-        font-size: 1.2rem !important;
-        font-weight: 600 !important;
+        background: transparent !important;
+        color: #1a1a1a !important;
+        font-size: 1rem !important;
+        font-weight: 400 !important;
         font-family: 'Rajdhani', sans-serif !important;
-        text-shadow: 0 0 5px rgba(0, 255, 255, 0.5) !important;
-        letter-spacing: 0.5px !important;
+        letter-spacing: 0.3px !important;
+        padding: 14px 20px !important;
+        border: none !important;
+        outline: none !important;
+        line-height: 1.5 !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    .stChatInput input::placeholder,
+    .stChatInput textarea::placeholder {
+        color: rgba(0, 0, 0, 0.45) !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.3px !important;
+        opacity: 1 !important;
     }
     
     .stChatInput button {
-        background: linear-gradient(135deg, rgba(0, 255, 255, 0.3) 0%, rgba(255, 0, 255, 0.3) 100%) !important;
-        border: 2px solid #00ffff !important;
-        border-radius: 15px !important;
-        color: #00ffff !important;
-        box-shadow: 
-            0 0 15px rgba(0, 255, 255, 0.5),
-            inset 0 0 10px rgba(0, 255, 255, 0.1) !important;
-        transition: all 0.3s ease !important;
+        background: linear-gradient(135deg, #00ffff 0%, #00d4d4 100%) !important;
+        border: none !important;
+        border-radius: 50% !important;
+        color: #0a0e27 !important;
+        width: 42px !important;
+        height: 42px !important;
+        min-width: 42px !important;
+        padding: 0px !important;
+        margin: 4px !important;
+        box-shadow: 0 2px 10px rgba(0, 255, 255, 0.4) !important;
+        transition: all 0.2s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .stChatInput button svg {
+        width: 20px !important;
+        height: 20px !important;
+        fill: #0a0e27 !important;
+        stroke: #0a0e27 !important;
+        stroke-width: 2px !important;
     }
     
     .stChatInput button:hover {
-        background: linear-gradient(135deg, rgba(0, 255, 255, 0.5) 0%, rgba(255, 0, 255, 0.5) 100%) !important;
-        box-shadow: 
-            0 0 25px rgba(0, 255, 255, 0.8),
-            inset 0 0 15px rgba(0, 255, 255, 0.2) !important;
-        border-color: #ff00ff !important;
-        color: #ff00ff !important;
+        background: linear-gradient(135deg, #00d4d4 0%, #00a8a8 100%) !important;
+        box-shadow: 0 4px 16px rgba(0, 255, 255, 0.6) !important;
         transform: scale(1.05);
+    }
+    
+    .stChatInput button:active {
+        transform: scale(0.98);
+        box-shadow: 0 1px 6px rgba(0, 255, 255, 0.4) !important;
+    }
+    
+    /* Add padding to bottom of main content to prevent overlap */
+    .main .block-container {
+        padding-bottom: 120px !important;
     }
     
     .stTextInput > div > div > input {
@@ -534,6 +540,125 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+def export_to_json(data: dict) -> str:
+    """Export candidate data to JSON format"""
+    return json.dumps(data, indent=2)
+
+
+def export_to_csv(data: dict) -> bytes:
+    """Export candidate data to CSV format"""
+    # Convert dict to DataFrame
+    df_data = {}
+    for key, value in data.items():
+        if isinstance(value, list):
+            df_data[key] = ', '.join(map(str, value))
+        else:
+            df_data[key] = value
+    
+    df = pd.DataFrame([df_data])
+    return df.to_csv(index=False).encode('utf-8')
+
+
+def export_to_excel(data: dict) -> bytes:
+    """Export candidate data to Excel format"""
+    # Convert dict to DataFrame
+    df_data = {}
+    for key, value in data.items():
+        if isinstance(value, list):
+            df_data[key] = ', '.join(map(str, value))
+        else:
+            df_data[key] = value
+    
+    df = pd.DataFrame([df_data])
+    
+    # Create Excel file in memory
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='Candidate Data', index=False)
+    output.seek(0)
+    return output.getvalue()
+
+
+def export_to_pdf(data: dict) -> bytes:
+    """Export candidate data to PDF format using HTML"""
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.units import inch
+    
+    # Create PDF in memory
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    elements = []
+    
+    # Styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#00ffff'),
+        spaceAfter=30,
+        alignment=1  # Center
+    )
+    
+    # Add title
+    elements.append(Paragraph("TalentScout AI - Candidate Profile", title_style))
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # Create table data
+    table_data = [['Field', 'Value']]
+    for key, value in data.items():
+        field_name = key.replace('_', ' ').title()
+        if isinstance(value, list):
+            field_value = ', '.join(map(str, value))
+        else:
+            field_value = str(value)
+        table_data.append([field_name, field_value])
+    
+    # Create table
+    table = Table(table_data, colWidths=[2.5*inch, 4*inch])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#00ffff')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#0a0e27')),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f0f0')]),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 10),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (0, 1), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+    ]))
+    
+    elements.append(table)
+    elements.append(Spacer(1, 0.5*inch))
+    
+    # Add footer
+    footer_style = ParagraphStyle(
+        'Footer',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=colors.grey,
+        alignment=1
+    )
+    elements.append(Paragraph(f"Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", footer_style))
+    
+    # Build PDF
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+
 def initialize_session_state():
     """Initialize session state variables"""
     if 'messages' not in st.session_state:
@@ -554,7 +679,7 @@ def render_header():
     """Render the application header"""
     st.markdown("""
     <div class="header">
-        <h1>⚡ TALENTSCOUT AI ⚡</h1>
+        <h1>TALENTSCOUT AI</h1>
         <p>NEURAL HIRING INTERFACE | POWERED BY QUANTUM AI</p>
     </div>
     """, unsafe_allow_html=True)
@@ -563,7 +688,7 @@ def render_header():
 def render_sidebar():
     """Render the sidebar with candidate information and progress"""
     with st.sidebar:
-        st.markdown("### 📊 Candidate Progress")
+        st.markdown("### Candidate Progress")
         
         # Progress calculation
         required_fields = ['name', 'email', 'phone', 'experience', 'position', 'location', 'tech_stack']
@@ -581,7 +706,7 @@ def render_sidebar():
         
         # Display collected information
         if st.session_state.candidate_data:
-            st.markdown("### 📋 Collected Information")
+            st.markdown("### Collected Information")
             for key, value in st.session_state.candidate_data.items():
                 if key == 'tech_stack' and isinstance(value, list):
                     st.markdown(f"**{key.replace('_', ' ').title()}:**")
@@ -593,31 +718,79 @@ def render_sidebar():
         st.markdown("---")
         
         # Conversation status
-        status = "🟢 Active" if st.session_state.conversation_active else "🔴 Ended"
+        status = "Active" if st.session_state.conversation_active else "Ended"
         st.markdown(f"**Status:** {status}")
         
         st.markdown("---")
         
         # Action buttons
-        if st.button("🔄 Reset Conversation", use_container_width=True):
+        if st.button("Reset Conversation", use_container_width=True):
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
             st.rerun()
         
-        if st.button("💾 Export Data", use_container_width=True):
-            if st.session_state.candidate_data:
-                data_json = json.dumps(st.session_state.candidate_data, indent=2)
+        
+        if st.session_state.candidate_data:
+            st.markdown("### Export Options")
+            
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename_base = f"candidate_{timestamp}"
+            
+            # Create columns for export buttons
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # JSON Export
+                json_data = export_to_json(st.session_state.candidate_data)
                 st.download_button(
-                    "Download JSON",
-                    data_json,
-                    file_name=f"candidate_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                    mime="application/json"
+                    label="📄 JSON",
+                    data=json_data,
+                    file_name=f"{filename_base}.json",
+                    mime="application/json",
+                    use_container_width=True
                 )
+                
+                # CSV Export
+                csv_data = export_to_csv(st.session_state.candidate_data)
+                st.download_button(
+                    label="📊 CSV",
+                    data=csv_data,
+                    file_name=f"{filename_base}.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
+            
+            with col2:
+                # Excel Export
+                excel_data = export_to_excel(st.session_state.candidate_data)
+                st.download_button(
+                    label="📗 Excel",
+                    data=excel_data,
+                    file_name=f"{filename_base}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
+                
+                # PDF Export
+                try:
+                    pdf_data = export_to_pdf(st.session_state.candidate_data)
+                    st.download_button(
+                        label="📕 PDF",
+                        data=pdf_data,
+                        file_name=f"{filename_base}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+                except Exception as e:
+                    st.error(f"PDF export requires reportlab library. Install it with: pip install reportlab")
+        else:
+            st.info("No data to export yet. Complete the conversation first.")
+
         
         st.markdown("---")
         st.markdown("""
         <div style="text-align: center; color: #667eea;">
-            <small>💡 Type 'exit', 'quit', or 'bye' to end the conversation</small>
+            <small>Type 'exit', 'quit', or 'bye' to end the conversation</small>
         </div>
         """, unsafe_allow_html=True)
 
@@ -693,7 +866,7 @@ def main():
             handle_user_input(user_input)
             st.rerun()
     else:
-        st.info("💬 Conversation has ended. Click 'Reset Conversation' in the sidebar to start over.")
+        st.info("Conversation has ended. Click 'Reset Conversation' in the sidebar to start over.")
 
 
 if __name__ == "__main__":
